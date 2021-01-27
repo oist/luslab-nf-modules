@@ -34,7 +34,7 @@ process last_db {
 
         prefix = opts.suffix ? "${meta.sample_id}${opts.suffix}" : "${meta.sample_id}"
 
-        last_command = "lastdb $args -P ${task.cpus} ${reference_sequences.simpleName} ${reference_sequences}"
+        last_command = "lastdb $args -P ${task.cpus} ${meta.sample_id} ${reference_sequences}"
 
         if (params.verbose){
             println ("[MODULE] last_db command: " + last_command)
@@ -64,8 +64,7 @@ process last_train {
 
     input:
         val opts
-        tuple val(meta), path(reference_sequences)
-        tuple val(meta), path(last_db)
+        tuple val(meta_db), path(last_db)
         tuple val(meta), path(query_sequences)
 
     output:
@@ -78,9 +77,9 @@ process last_train {
             args += ext_args.trim()
         }
 
-        prefix = opts.suffix ? "${meta.sample_id}${opts.suffix}" : "${meta.sample_id}"
+        prefix = opts.suffix ? "${meta_db.sample_id}${opts.suffix}" : "${meta.sample_id}"
 
-        last_command = "last-train $args -P ${task.cpus} ${reference_sequences.simpleName} ${query_sequences} > ${reference_sequences.simpleName}-${query_sequences.simpleName}.par"
+        last_command = "last-train $args -P ${task.cpus} ${meta_db.sample_id} ${query_sequences} > ${meta_db.sample_id}-${meta.sample_id}.par"
 
         if (params.verbose){
             println ("[MODULE] last_train command: " + last_command)
@@ -110,9 +109,8 @@ process last_align {
 
     input:
         val opts
-        tuple val(meta), path(reference_sequences)
-        tuple val(meta), path(last_db)
-        tuple val(meta), path(last_train_par)
+        tuple val(meta_db), path(last_db)
+        tuple val(meta_par), path(last_train_par)
         tuple val(meta), path(query_sequences)
 
     output:
@@ -127,7 +125,7 @@ process last_align {
 
         prefix = opts.suffix ? "${meta.sample_id}${opts.suffix}" : "${meta.sample_id}"
 
-        last_command = "lastal $args -P ${task.cpus} -p ${last_train_par} ${reference_sequences.simpleName} ${query_sequences} | last-split -m1 > ${reference_sequences.simpleName}-${query_sequences.simpleName}.maf"
+        last_command = "lastal $args -P ${task.cpus} -p ${last_train_par} ${meta_db.sample_id} ${query_sequences} | last-split -m1 > ${meta_db.sample_id}-${meta.sample_id}.maf"
 
         if (params.verbose){
             println ("[MODULE] last_align command: " + last_command)
